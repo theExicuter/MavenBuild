@@ -1,33 +1,14 @@
-node('master') {
-  ansiColor('xterm') {
-	stage ('checkout code'){
-		checkout scm
+node{
+	stage('SCM Checkout'){
+		
+	git 'https://github.com/theExicuter/MavenBuild.git'		
 	}
 	
-	stage ('Build'){
-		sh "mvn clean install -Dmaven.test.skip=true"
+	stage('Compile-Package'){
+	    def mvnHome = tool name: 'maven-3', type: 'maven'
+		sh "${mvnHome}/bin/mvn package"
 	}
 
-	stage ('Test Cases Execution'){
-		sh "mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install -Pcoverage-per-test"
-	}
-
-	stage ('Sonar Analysis'){
-		//sh 'mvn sonar:sonar -Dsonar.host.url=http://35.153.67.119:9000 -Dsonar.login=77467cfd2653653ad3b35463fbfdb09285f08be5'
-	}
-
-	stage ('Archive Artifacts'){
-		archiveArtifacts artifacts: 'target/*.war'
-	}
-	
-	stage ('Deployment'){
-		/*ansiblePlaybook( 
-        		playbook: 'deploy.yml',
-        		inventory: '/etc/ansible/hosts', 
-			extras: '--become',
-        		colorized: true) */
-		deploy adapters: [tomcat9(credentialsId: 'TomcatCreds', path: '', url: 'http://52.90.29.200:8080/')], contextPath: null, war: 'target/*.war'
-	}
 	stage ('Notification'){
 		//slackSend color: 'good', message: 'Deployment Sucessful'
 		emailext (
@@ -36,5 +17,3 @@ node('master') {
 		      to: "sikandarali@ieee.org"
 		    )
 	}
-   }
-}
